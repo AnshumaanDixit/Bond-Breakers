@@ -1,4 +1,7 @@
 import { Menu } from './scenes/start.js';
+const screenRatio = window.innerWidth/window.innerHeight;
+const dynamicWidth = 360*screenRatio;
+//^^ calculate the width based on the divice the users playing on so the image fits
 const config = {
     type: Phaser.AUTO,
     title: 'Bond Breakers',
@@ -24,5 +27,4 @@ const config = {
     },
 }
 
-new Phaser.Game(config);
-            
+const game = new Phaser.Game(config);         
