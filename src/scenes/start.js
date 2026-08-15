@@ -12,8 +12,6 @@ export class Menu extends Phaser.Scene {
         this.load.image('left','assets/left.png');
         this.load.image('right','assets/right.png');
         this.load.image('atk','assets/attack.png');
-        this.load.image('dropdownbtn','assets/dropdownbtn.png');
-        this.load.image('dropdownmenu','assets/dropdownmenu.png');
     }
     create() {
         this.physics.world.setBounds(0,0,2560,360);
@@ -41,18 +39,30 @@ export class Menu extends Phaser.Scene {
         rightBtn.on('pointerout',()=>{this.player.touchRight = false;});
         //^^ 'pointerdown' 'pointerup' 'pointerout' are all strings that are strings returned by setinteractive() on actions 'clicked the sprite', 'clicked off the sprite', 'clicked the sprite and dragged off the screen' respectively.
         //^^ ()=>{} is a form of lamda function in js
-        const atk1 = this.add.sprite(625-34-34,345,'atk').setInteractive().setScrollFactor(0);
-        const atk2 = this.add.sprite(625-34,345,'atk').setInteractive().setScrollFactor(0);
-        const atk3 = this.add.sprite(625,345,'atk').setInteractive().setScrollFactor(0);
-        //^^ made 3 attack buttons and added them to the screen
-        const dropdownbtn = this.add.sprite(594,12,'dropdownbtn').setInteractive().setScrollFactor(0);
-        const dropdownmenu = this.add.sprite(590,175,'dropdownmenu').setInteractive().setScrollFactor(0);
-        //^^ made a dropdown button and menu
-        dropdownmenu.setVisible(false);
-        dropdownbtn.on('pointerdown',()=>{dropdownmenu.setVisible(!dropdownmenu.visible);});
-        //^^ logic for toggling the dropdown menu
+        this.atk = this.add.sprite(600,345,'atk').setInteractive().setScrollFactor(0);
+        this.activeAtkIndex = 0;
+        this.elements = ['water','hydrogen','oxygen','fe','na','s'];
+        this.textureFile = {
+            water: 'atk',
+            hydrogen: 'assets/attack.png',
+            oxygen: 'assets/attack.png',
+            fe: 'assets/attack.png',
+            na: 'assets/attack.png',
+            s: 'assets/attack.png'
+        }
+        //^^ made attack button and added them to the screen
+        this.atk.setScale(1.5,1.5);
+    }
+    updateAtkButton() {
+        if(this.activeAtkIndex<5)
+            this.atk.setTexture(this.textureFile[this.elements[this.activeAtkIndex++]]);
+        else {
+            this.atk.setTexture(this.textureFile[this.elements[0]]);
+            this.activeAtkIndex = 0;
+        }
     }
     update(){
         this.player.update();
+        this.updateAtkButton();
     }
 }
