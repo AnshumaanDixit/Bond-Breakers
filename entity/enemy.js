@@ -33,6 +33,30 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
 
         this.isAttacking = false;
         //^^flag for stopping spam of attack, as well as to control enemy's movement when its in attack state.
+        let healthanddefense = 'HP:'+this.health+' DEF:'+this.defense;
+        let valencyandcharge = 'Valency:'+this.valency+' Charge:'+this.charge;
+        let element = 'Element:'+ChemInfo[this.enemytype].name;
+        this.hANDd = scene.add.text(this.x,this.y,healthanddefense,{
+            fontFamily: 'Arial',
+            fontSize: '8px',
+            fill: '#ffffff',
+            backgroundColor: '#000000',
+            padding: {x:4,y:2}
+        }).setOrigin(0.5).setDepth(100);
+        this.vANDc = scene.add.text(this.x,this.y,valencyandcharge,{
+            fontFamily: 'Arial',
+            fontSize: '8px',
+            fill: '#ffffff',
+            backgroundColor: '#000000',
+            padding: {x:4,y:2}
+        }).setOrigin(0.5).setDepth(100);
+        this.element = scene.add.text(this.x,this.y,element,{
+            fontFamily: 'Arial',
+            fontSize: '8px',
+            fill: '#ffffff',
+            backgroundColor: '#000000',
+            padding: {x:4,y:2}
+        }).setOrigin(0.5).setDepth(100);
     }
     takeDmg(atkType)
     {   let dmgDealt = 0;
@@ -106,7 +130,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
             }
             //^^logic for corrosion, if enemy is of metal type and is below sodium in reactivity series but above H
         }
-        else if(atkType.name == 'Water' && (ChemInfo[this.enemytype].reactivity<=2 || ChemInfo[this.enemytype].reactivity>=13))
+        else if(atkType.name == 'Water' && (ChemInfo[this.enemytype].pH<=2 || ChemInfo[this.enemytype].pH>=13))
         {
             dmgDealt = -200;  
         }
@@ -162,14 +186,29 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
         {
             if(this.hitbox){
                 this.hitbox.destroy();
+            if(this.hANDd)
+                this.hANDd.destroy();
+            if(this.vANDc)
+                this.vANDc.destroy();
+            if(this.element)
+                this.element.destroy();
                 this.destroy();
             }
         }
         //^^checks of if the health is lower than 0.
     }
-    updateHitbox() {
+    updateHitboxAndHud() {
+        let healthanddefense = 'HP:'+this.health+' Def:'+this.defense;
+        let valencyandcharge = 'Valency:'+this.valency+' Charge:'+this.charge;
+        let element = 'Element:'+ChemInfo[this.enemytype].name;
         this.hitbox.setPosition(this.x,this.y);
         //^^to update the hitbox
+        this.hANDd.setPosition(this.x,this.y-5);
+        this.hANDd.setText(healthanddefense);
+        this.vANDc.setPosition(this.x,this.y-20);
+        this.vANDc.setText(valencyandcharge);
+        this.element.setPosition(this.x,this.y-35);
+        this.element.setText(element);
     }
     attack() {
         if(this.isAttacking) {
@@ -209,7 +248,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
         //^^the above is the movement logic for the enemy AI moving towards the player if they are close to 100px to them, and attacking them if under 50px.
     }
     update() {
-        this.updateHitbox();
+        this.updateHitboxAndHud();
         this.checkForPlayer();
     }
 }

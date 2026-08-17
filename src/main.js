@@ -10,7 +10,8 @@ const config = {
     width: 640,
     height: 360,
     backgroundColor: '#000000',
-    pixelArt: false,
+    pixelArt: true,
+    roundPixels: true,
     input: {
         activePointer:3,
     },

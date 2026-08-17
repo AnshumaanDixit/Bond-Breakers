@@ -60,7 +60,7 @@ export class Menu extends Phaser.Scene {
         //^^next we setframe as we told above for spritesheet mechanic, starting with setframe(0) next we setdepth so the player is always on top
         
         
-        this.cameras.main.setBounds(-100,0,2660 + (34*3),360);
+        this.cameras.main.setBounds(-175,0,2735 + (34*3),360);
         //^^further increased the width so that the right side's attack buttons are also not ran over by the player, btw each attack button is a square of 34px
         //^^here the format is (x,y, width of level, height of level) here the x origin is -100 because of how the buttons are placed, there are two buttons, each of width 50px camera is allowed to move past 100px origin so player dosent walk into buttons, and for that reason we need the width to be set to 2660 so it corresponds with border at 2560 and not 2460
         //^^set the camera's bounds so it dosent go out the world boundary
@@ -70,8 +70,10 @@ export class Menu extends Phaser.Scene {
         //^^setup so camera follows the player
         
         
-        const leftBtn = this.add.sprite(25, 345, 'left').setInteractive().setScrollFactor(0);
-        const rightBtn = this.add.sprite(75,345, 'right').setInteractive().setScrollFactor(0);
+        const leftBtn = this.add.sprite(45, 300, 'left').setInteractive().setScrollFactor(0);
+        const rightBtn = this.add.sprite(130,300, 'right').setInteractive().setScrollFactor(0);
+        leftBtn.setScale(1.5);
+        rightBtn.setScale(1.5);
         //^^adding left and right buttons as sprites, which will be interactive with .setInteractive() and will not be affected by camera movement by .setScrollFactor(0)
         
         
@@ -84,7 +86,8 @@ export class Menu extends Phaser.Scene {
         //^^ 'pointerdown' 'pointerup' 'pointerout' are all strings that are strings returned by setinteractive() on actions 'clicked the sprite', 'clicked off the sprite', 'clicked the sprite and dragged off the screen' respectively.
         //^^ ()=>{} is a form of lamda function in js
 
-        this.atk = this.add.sprite(615,330,'atk').setInteractive().setScrollFactor(0);
+        this.atk = this.add.sprite(600,320,'atk').setInteractive().setScrollFactor(0);
+        this.atk.setScale(1.5);
         this.activeAtkIndex = 0;
         this.elements = ['k','na','ca','mg','al','zn','fe','pb','h','cu','hg','ag','au','pt','water','hcl','naoh','e'];
         this.textureFile = {
@@ -111,10 +114,10 @@ export class Menu extends Phaser.Scene {
         //^^contains logic to make more buttons and elemental attacks
         
         
-        const leftAtkChangeBtn = this.add.sprite(625,295,'atk').setInteractive().setScrollFactor(0);
-        leftAtkChangeBtn.setScale(0.5,0.5);
-        const rightAtkChangeBtn = this.add.sprite(600,295,'atk').setInteractive().setScrollFactor(0);
-        rightAtkChangeBtn.setScale(0.5,0.5);
+        const leftAtkChangeBtn = this.add.sprite(575,265,'atk').setInteractive().setScrollFactor(0);
+        leftAtkChangeBtn.setScale(0.8);
+        const rightAtkChangeBtn = this.add.sprite(620,265,'atk').setInteractive().setScrollFactor(0);
+        rightAtkChangeBtn.setScale(0.8);
         //^^logic to change the active attack button, making the buttons first
         
         
@@ -147,6 +150,14 @@ export class Menu extends Phaser.Scene {
     
         this.physics.add.overlap(this.player,this.enemyHitboxes,this.playerAttacked,null,this);
         //^^overlap to check for enemy hitting the player
+        let playerHealth = 'Health:'+this.player.health;
+        this.playerHud = this.add.text(this.player.x,this.player.y,playerHealth,{
+            fontFamily: 'Arial',
+            fontSize: '8px',
+            fill: '#ffffff',
+            backgroundColor: '#000000',
+            padding: {x:4,y:2}
+             }).setOrigin(0.5).setDepth(100);
     }
     updateAtkButton() {
             this.atk.setTexture(this.textureFile[this.elements[this.activeAtkIndex]]);
@@ -155,7 +166,8 @@ export class Menu extends Phaser.Scene {
     playerAttacked(player, enemyHitbox) {
         if(enemyHitbox.body.enable==true){
             enemyHitbox.body.enable = false;
-            player.setTint(0x0000ff);
+            this.player.health-=10;
+            player.setTint(0xff0000);
             this.time.delayedCall(150,()=>{
                 player.clearTint();
             })
@@ -174,8 +186,14 @@ export class Menu extends Phaser.Scene {
         //^^takeDmg() is a function in enemy, 
         //^^here we have to check if body is true otherwise player will attack all the other enemies if they are in his range, though this can be intentional, right now it is not.
     }
+    updatePlayerHUD() {
+        let playerHealth = 'Health:'+this.player.health;
+        this.playerHud.setPosition(this.player.x,this.player.y-5);
+        this.playerHud.setText(playerHealth);
+    }
     update(){
         this.player.update();
+        this.updatePlayerHUD();
         //^^updating the player for movement each frame
     }
 }
