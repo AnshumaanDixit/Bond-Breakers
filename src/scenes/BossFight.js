@@ -1,40 +1,61 @@
-const GAME_WIDTH = 1100;
-const GAME_HEIGHT = 700;
+const GAME_WIDTH = 640;
 
-class StartScene extends Phaser.Scene {
+import { QuizManager } from '../chemistry/QuizManager.js';
+import { Level } from '../scenes/start.js';
+const COLORS = {
+    bg: "#0a0a12",          
+    panel: 0x12121c,        
+    border: 0x3a3a52,       
+    text: "#e0e0e0",
+    highlight: "#f7c948",
+    playerColors: { core: 0x000000, outline: 0x4da3ff, hp: 0x4caf50 },
+    bossColors: { core: 0x1a0505, outline: 0xff4d4d, hp: 0xe53935 }
+};
+
+export class StartScene extends Phaser.Scene {
     constructor() { super("StartScene"); }
 
     create() {
-        this.cameras.main.setBackgroundColor("#08111f");
+        this.cameras.main.setBackgroundColor(COLORS.bg);
 
-        this.add.text(GAME_WIDTH / 2, 135, "SCIENCE BOSS BATTLE", {
-            fontFamily: "Arial", fontSize: "48px", color: "#f7c948",
-            fontStyle: "bold"
+        this.scale.setGameSize(1100, 700);
+        
+        this.scale.scaleMode = Phaser.Scale.FIT;
+        this.scale.autoCenter = Phaser.Scale.CENTER_BOTH;
+        this.scale.updateScale(); // Applies the changes instantly
+
+        // Retro JRPG Title
+        this.add.text(GAME_WIDTH / 2, 200, "SCIENCE BOSS BATTLE", {
+            fontFamily: "Courier New, monospace", fontSize: "48px", color: COLORS.highlight, fontStyle: "bold"
         }).setOrigin(0.5);
 
-        this.add.text(GAME_WIDTH / 2, 205,
-            "Defeat the Knowledge Boss by answering Science questions!",
-            { fontFamily: "Arial", fontSize: "22px", color: "#dbe7f5" }
-        ).setOrigin(0.5);
+        this.add.text(GAME_WIDTH / 2, 260, "Defeat the Knowledge Boss by answering Science questions!", {
+            fontFamily: "Courier New", fontSize: "18px", color: COLORS.text
+        }).setOrigin(0.5);
 
-        const start = this.add.rectangle(GAME_WIDTH/2, 360, 270, 75, 0xf7c948)
+        // Styled Button
+        const startBtn = this.add.rectangle(GAME_WIDTH / 2, 400, 300, 60, COLORS.panel)
+            .setStrokeStyle(3, 0xf7c948)
             .setInteractive({ useHandCursor: true });
 
-        this.add.text(GAME_WIDTH/2, 360, "START BATTLE", {
-            fontFamily: "Arial", fontSize: "26px", color: "#08111f",
-            fontStyle: "bold"
+        const btnText = this.add.text(GAME_WIDTH / 2, 400, "ENGAGE BATTLE", {
+            fontFamily: "Courier New", fontSize: "24px", color: COLORS.highlight, fontStyle: "bold"
         }).setOrigin(0.5);
 
-        start.on("pointerover", () => start.setFillStyle(0xffd866));
-        start.on("pointerout", () => start.setFillStyle(0xf7c948));
-        start.on("pointerdown", () => this.scene.start("BossBattleScene"));
+        startBtn.on("pointerover", () => { startBtn.setFillStyle(0x2a2a3a); });
+        startBtn.on("pointerout", () => { startBtn.setFillStyle(COLORS.panel); });
+        startBtn.on("pointerdown", () => this.scene.start("BossBattleScene"));
+        
     }
 }
 
-class BossBattleScene extends Phaser.Scene {
+export class BossBattleScene extends Phaser.Scene {
     constructor() { super("BossBattleScene"); }
 
     create() {
+       
+
+        // 1. Initialize logic
         this.quiz = new QuizManager();
         this.questions = this.quiz.getRandomQuestions(5);
         this.index = 0;
@@ -43,305 +64,218 @@ class BossBattleScene extends Phaser.Scene {
         this.maxPlayerHP = 100;
         this.bossHP = 100;
         this.playerHP = 100;
-        this.score = 0;
-        this.correct = 0;
+        
         this.combo = 0;
-        this.bestCombo = 0;
         this.locked = false;
 
-        this.cameras.main.setBackgroundColor("#0b1627");
+        this.cameras.main.setBackgroundColor(COLORS.bg);
 
-        this.createStaticUI();
+        // 2. Build the RPG Scene
         this.createCharacters();
+        this.createUI();
         this.showQuestion();
-    }
 
-    createStaticUI() {
-        this.add.text(35, 25, "⚗ SCIENCE BOSS BATTLE", {
-            fontFamily: "Arial", fontSize: "28px", color: "#f7c948",
-            fontStyle: "bold"
+        this.children.list.forEach(child => {
+            if (child.type === 'Text') {
+                child.setResolution(3); // 3x density fixes the camera crunch
+                child.texture.setFilter(Phaser.Textures.FilterMode.LINEAR);
+            }
         });
-
-        this.scoreText = this.add.text(780, 30, "Score: 0", {
-            fontFamily: "Arial", fontSize: "20px", color: "#ffffff"
-        });
-        this.comboText = this.add.text(940, 30, "Combo: 0", {
-            fontFamily: "Arial", fontSize: "20px", color: "#7ee787"
-        });
-
-        this.questionNoText = this.add.text(35, 85, "", {
-            fontFamily: "Arial", fontSize: "18px", color: "#9fb3c8"
-        });
-
-        this.chapterText = this.add.text(35, 112, "", {
-            fontFamily: "Arial", fontSize: "17px", color: "#7dd3fc"
-        });
-
-        this.add.rectangle(550, 465, 1010, 260, 0x142238)
-            .setStrokeStyle(2, 0x304766);
-
-        this.feedbackText = this.add.text(550, 405, "", {
-            fontFamily: "Arial", fontSize: "22px", color: "#f7c948",
-            fontStyle: "bold", align: "center"
-        }).setOrigin(0.5);
-
-        this.questionText = this.add.text(550, 450, "", {
-            fontFamily: "Arial", fontSize: "23px", color: "#ffffff",
-            fontStyle: "bold", align: "center", wordWrap: { width: 900 }
-        }).setOrigin(0.5);
-
-        this.timerText = this.add.text(550, 620, "", {
-            fontFamily: "Arial", fontSize: "19px", color: "#f7c948",
-            fontStyle: "bold"
-        }).setOrigin(0.5);
     }
 
     createCharacters() {
-        // Lightweight vector-style characters, so no external image assets are required.
-        this.playerBody = this.add.circle(230, 245, 65, 0x4da3ff);
-        this.add.text(230, 245, "🧑‍🔬", { fontSize: "70px" }).setOrigin(0.5);
-        this.add.text(230, 330, "PLAYER", {
-            fontFamily: "Arial", fontSize: "20px", color: "#ffffff", fontStyle: "bold"
-        }).setOrigin(0.5);
-
-        this.bossBody = this.add.circle(870, 235, 85, 0xd94b4b);
-        this.bossEmoji = this.add.text(870, 235, "👹", { fontSize: "90px" }).setOrigin(0.5);
-        this.add.text(870, 340, "KNOWLEDGE BOSS", {
-            fontFamily: "Arial", fontSize: "20px", color: "#ffffff", fontStyle: "bold"
-        }).setOrigin(0.5);
-
-        this.add.text(550, 260, "VS", {
-            fontFamily: "Arial", fontSize: "30px", color: "#f7c948", fontStyle: "bold"
-        }).setOrigin(0.5);
-
-        this.add.text(90, 365, "PLAYER HP", {
-            fontFamily: "Arial", fontSize: "16px", color: "#9fb3c8"
+        // PLAYER AVATAR (Glowing JRPG Diamond)
+        this.playerSprite = this.add.rectangle(230, 220, 70, 70, COLORS.playerColors.core)
+            .setStrokeStyle(4, COLORS.playerColors.outline).setAngle(45);
+            
+        // Floating idle animation
+        this.tweens.add({
+            targets: this.playerSprite, y: 210, duration: 1500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
         });
-        this.playerBarBg = this.add.rectangle(180, 390, 260, 18, 0x26384f);
-        this.playerBar = this.add.rectangle(180, 390, 260, 18, 0x55d66b);
 
-        this.add.text(760, 365, "BOSS HP", {
-            fontFamily: "Arial", fontSize: "16px", color: "#9fb3c8"
+        // BOSS AVATAR (Pulsating Monolith)
+        this.bossSprite = this.add.rectangle(870, 220, 100, 140, COLORS.bossColors.core)
+            .setStrokeStyle(4, COLORS.bossColors.outline);
+            
+        this.tweens.add({
+            targets: this.bossSprite, scaleX: 1.05, scaleY: 1.05, duration: 2000, yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
         });
-        this.bossBarBg = this.add.rectangle(870, 390, 260, 18, 0x26384f);
-        this.bossBar = this.add.rectangle(870, 390, 260, 18, 0xef5350);
 
-        this.playerHPText = this.add.text(180, 410, "100 / 100", {
-            fontFamily: "Arial", fontSize: "15px", color: "#ffffff"
+        // VS Text
+        this.add.text(550, 220, "VS", { fontFamily: "Courier New", fontSize: "32px", color: "#555555", fontStyle: "bold" }).setOrigin(0.5);
+    }
+
+    createUI() {
+        // HEALTH BARS
+        this.add.text(90, 320, "PLAYER", { fontFamily: "Courier New", fontSize: "16px", color: COLORS.text, fontStyle: "bold" });
+        this.playerBarBg = this.add.rectangle(180, 345, 260, 20, 0x000000).setStrokeStyle(2, 0x555555);
+        this.playerBar = this.add.rectangle(50, 345, 260, 20, COLORS.playerColors.hp).setOrigin(0, 0.5);
+
+        this.add.text(760, 320, "BOSS", { fontFamily: "Courier New", fontSize: "16px", color: COLORS.text, fontStyle: "bold" });
+        this.bossBarBg = this.add.rectangle(870, 345, 260, 20, 0x000000).setStrokeStyle(2, 0x555555);
+        this.bossBar = this.add.rectangle(740, 345, 260, 20, COLORS.bossColors.hp).setOrigin(0, 0.5);
+
+        // JRPG DIALOGUE PANEL
+        this.add.rectangle(550, 540, 1060, 280, COLORS.panel)
+            .setStrokeStyle(4, COLORS.border);
+
+        this.chapterText = this.add.text(40, 420, "", { fontFamily: "Courier New", fontSize: "16px", color: COLORS.highlight });
+        
+        this.questionText = this.add.text(550, 460, "", {
+            fontFamily: "Courier New", fontSize: "20px", color: "#ffffff",
+            fontStyle: "bold", align: "center", wordWrap: { width: 980 }
         }).setOrigin(0.5);
 
-        this.bossHPText = this.add.text(870, 410, "100 / 100", {
-            fontFamily: "Arial", fontSize: "15px", color: "#ffffff"
+        this.feedbackText = this.add.text(550, 390, "", {
+            fontFamily: "Courier New", fontSize: "24px", fontStyle: "bold"
         }).setOrigin(0.5);
     }
 
     showQuestion() {
+        // === FIXED WIN/LOSS LOGIC ===
         if (this.bossHP <= 0) return this.finish(true);
         if (this.playerHP <= 0) return this.finish(false);
-        if (this.index >= this.questions.length) return this.finish(this.bossHP < this.maxBossHP);
+        // If we ran out of questions and boss is still alive, player loses!
+        if (this.index >= this.questions.length) return this.finish(false);
 
         this.locked = false;
         const q = this.questions[this.index];
 
-        this.questionNoText.setText(`Question ${this.index + 1} / ${this.questions.length}`);
-        this.chapterText.setText(q.chapter);
+        this.chapterText.setText(`[ ${q.chapter} - Q${this.index + 1}/5 ]`);
         this.questionText.setText(q.question);
         this.feedbackText.setText("");
 
+        // Build Option Buttons
         if (this.optionButtons) this.optionButtons.forEach(b => b.destroy());
         this.optionButtons = [];
 
-        const positions = [
-            [300, 535], [800, 535], [300, 585], [800, 585]
-        ];
+        const positions = [ [280, 530], [820, 530], [280, 600], [820, 600] ];
 
         q.options.forEach((option, i) => {
             const [x, y] = positions[i];
-            const bg = this.add.rectangle(x, y, 430, 40, 0x263a55)
+            
+            const btnBg = this.add.rectangle(x, y, 480, 50, 0x000000)
+                .setStrokeStyle(2, COLORS.border)
                 .setInteractive({ useHandCursor: true });
 
-            const label = this.add.text(x - 195, y, `${String.fromCharCode(65+i)}. ${option}`, {
-                fontFamily: "Arial", fontSize: "16px", color: "#ffffff",
-                wordWrap: { width: 390 }
-            }).setOrigin(0, 0.5);
+            const label = this.add.text(x, y, `${String.fromCharCode(65+i)}. ${option}`, {
+                fontFamily: "Courier New", fontSize: "16px", color: COLORS.text, wordWrap: { width: 450 }
+            }).setOrigin(0.5);
 
-            bg.on("pointerover", () => !this.locked && bg.setFillStyle(0x345274));
-            bg.on("pointerout", () => !this.locked && bg.setFillStyle(0x263a55));
-            bg.on("pointerdown", () => this.answer(i));
+            btnBg.on("pointerover", () => !this.locked && btnBg.setFillStyle(0x2a2a3a));
+            btnBg.on("pointerout", () => !this.locked && btnBg.setFillStyle(0x000000));
+            btnBg.on("pointerdown", () => this.answer(i));
 
-            this.optionButtons.push(bg, label);
-        });
-
-        this.timeLeft = 15;
-        this.timerText.setText(`Time: ${this.timeLeft}s`);
-
-        this.timeEvent = this.time.addEvent({
-            delay: 1000,
-            repeat: 14,
-            callback: () => {
-                if (this.locked) return;
-                this.timeLeft--;
-                this.timerText.setText(`Time: ${this.timeLeft}s`);
-                if (this.timeLeft <= 0) this.answer(-1);
-            }
+            this.optionButtons.push(btnBg, label);
         });
     }
 
     answer(selected) {
         if (this.locked) return;
         this.locked = true;
-        if (this.timeEvent) this.timeEvent.remove(false);
 
         const q = this.questions[this.index];
-        const correct = selected === q.correctAnswer;
+        const isCorrect = (selected === q.correctAnswer);
 
-        if (correct) {
-            this.correct++;
+        if (isCorrect) {
             this.combo++;
-            this.bestCombo = Math.max(this.bestCombo, this.combo);
-
-            const damage = 20 + Math.max(0, this.combo - 1) * 2;
+            // Calculate Damage (Combo multiplies damage)
+            const damage = 20 + (Math.max(0, this.combo - 1) * 5);
             this.bossHP = Math.max(0, this.bossHP - damage);
-            this.score += 100 + this.combo * 10;
 
-            this.feedbackText.setColor("#7ee787");
-            this.feedbackText.setText(`✓ CORRECT!  Boss takes ${damage} damage!`);
-            this.attackBoss(damage);
+            this.feedbackText.setText(`CRITICAL HIT! [${damage} DMG]`).setColor("#00ff00");
+            this.attackAnimation(this.playerSprite, this.bossSprite, damage, "#00ff00");
         } else {
             this.combo = 0;
-            this.playerHP = Math.max(0, this.playerHP - 15);
+            // Increased Boss damage to 30. (4 wrong answers = Death)
+            const damage = 30; 
+            this.playerHP = Math.max(0, this.playerHP - damage);
 
-            this.feedbackText.setColor("#ff7b72");
-            this.feedbackText.setText(selected === -1
-                ? "⏰ TIME'S UP! The Boss attacks!"
-                : "✗ WRONG! The Boss attacks!");
-            this.attackPlayer();
+            this.feedbackText.setText(`INCORRECT! BOSS ATTACKS! [${damage} DMG]`).setColor("#ff0000");
+            this.attackAnimation(this.bossSprite, this.playerSprite, damage, "#ff0000");
         }
 
-        this.scoreText.setText(`Score: ${this.score}`);
-        this.comboText.setText(`Combo: ${this.combo}`);
         this.updateBars();
 
-        this.time.delayedCall(1100, () => {
+        // Use delayedCall to move to the next question cleanly
+        this.time.delayedCall(1500, () => {
             this.index++;
             this.showQuestion();
         });
     }
 
-    attackBoss(damage) {
+    attackAnimation(attacker, target, damage, color) {
+        // Lunge forward
         this.tweens.add({
-            targets: this.playerBody,
-            x: 720,
-            duration: 300,
+            targets: attacker,
+            x: attacker.x + (attacker.x < 500 ? 50 : -50),
+            duration: 150,
             yoyo: true,
             ease: "Power2"
         });
 
-        const hit = this.add.text(870, 180, `-${damage}`, {
-            fontFamily: "Arial", fontSize: "34px", color: "#ffe66d",
-            fontStyle: "bold"
-        }).setOrigin(0.5);
+        // Flash target and shake
+        this.time.delayedCall(150, () => {
+            // Spawn floating damage text
+            const dmgText = this.add.text(target.x, target.y - 40, `-${damage}`, {
+                fontFamily: "Courier New", fontSize: "36px", color: color, fontStyle: "bold"
+            }).setOrigin(0.5);
 
-        this.tweens.add({
-            targets: [this.bossBody, this.bossEmoji],
-            scale: 1.12,
-            duration: 120,
-            yoyo: true,
-            repeat: 1
-        });
-
-        this.tweens.add({
-            targets: hit, y: 125, alpha: 0, duration: 700,
-            onComplete: () => hit.destroy()
-        });
-    }
-
-    attackPlayer() {
-        this.tweens.add({
-            targets: [this.bossBody, this.bossEmoji],
-            x: 300,
-            duration: 300,
-            yoyo: true,
-            ease: "Power2"
-        });
-
-        this.tweens.add({
-            targets: [this.playerBody],
-            x: 230,
-            angle: { from: -6, to: 6 },
-            duration: 80,
-            repeat: 4,
-            yoyo: true
+            this.tweens.add({ targets: dmgText, y: target.y - 100, alpha: 0, duration: 800, onComplete: () => dmgText.destroy() });
+            
+            // Camera shake for impact!
+            this.cameras.main.shake(200, 0.01);
         });
     }
 
     updateBars() {
-        this.playerBar.width = 260 * (this.playerHP / this.maxPlayerHP);
-        this.bossBar.width = 260 * (this.bossHP / this.maxBossHP);
-        this.playerBar.x = 50 + this.playerBar.width / 2;
-        this.bossBar.x = 740 + this.bossBar.width / 2;
+        // Animate health bar reduction smoothly
+        this.tweens.add({
+            targets: this.playerBar,
+            width: 260 * (this.playerHP / this.maxPlayerHP),
+            duration: 300
+        });
 
-        this.playerHPText.setText(`${this.playerHP} / ${this.maxPlayerHP}`);
-        this.bossHPText.setText(`${this.bossHP} / ${this.maxBossHP}`);
+        this.tweens.add({
+            targets: this.bossBar,
+            width: 260 * (this.bossHP / this.maxBossHP),
+            duration: 300
+        });
     }
 
     finish(won) {
-        if (this.timeEvent) this.timeEvent.remove(false);
-
-        const attempted = Math.min(this.index, this.questions.length);
-        const accuracy = attempted ? Math.round((this.correct / attempted) * 100) : 0;
-
-        this.scene.start("ResultScene", {
-            won, score: this.score, correct: this.correct,
-            attempted, accuracy, bestCombo: this.bestCombo
-        });
+        this.scene.start("ResultScene", { won: won });
     }
 }
 
-class ResultScene extends Phaser.Scene {
+export class ResultScene extends Phaser.Scene {
     constructor() { super("ResultScene"); }
 
     create(data) {
-        this.cameras.main.setBackgroundColor("#08111f");
 
-        const title = data.won ? "🏆 VICTORY!" : "💡 TRY AGAIN";
-        const color = data.won ? "#7ee787" : "#f7c948";
+        this.cameras.main.setBackgroundColor(COLORS.bg);
 
-        this.add.text(GAME_WIDTH/2, 110, title, {
-            fontFamily: "Arial", fontSize: "52px", color, fontStyle: "bold"
+        const title = data.won ? "VICTORY ACHIEVED" : "SYSTEM FAILURE";
+        const color = data.won ? "#00ff00" : "#ff0000";
+        const subtitle = data.won ? "The Knowledge Boss was neutralized." : "You were defeated. Study and try again.";
+
+        this.add.text(GAME_WIDTH/2, 250, title, {
+            fontFamily: "Courier New", fontSize: "52px", color: color, fontStyle: "bold"
         }).setOrigin(0.5);
 
-        this.add.text(GAME_WIDTH/2, 185,
-            data.won ? "You defeated the Knowledge Boss!" : "Keep learning and challenge the Boss again.",
-            { fontFamily: "Arial", fontSize: "22px", color: "#dbe7f5" }
-        ).setOrigin(0.5);
+        this.add.text(GAME_WIDTH/2, 320, subtitle, {
+            fontFamily: "Courier New", fontSize: "20px", color: COLORS.text 
+        }).setOrigin(0.5);
 
-        this.add.text(GAME_WIDTH/2, 300,
-            `Score: ${data.score}\nCorrect: ${data.correct}/${data.attempted}\nAccuracy: ${data.accuracy}%\nBest Combo: ${data.bestCombo}`,
-            { fontFamily: "Arial", fontSize: "25px", color: "#ffffff", align: "center", lineSpacing: 14 }
-        ).setOrigin(0.5);
-
-        const btn = this.add.rectangle(GAME_WIDTH/2, 510, 260, 70, 0xf7c948)
+        const btn = this.add.rectangle(GAME_WIDTH/2, 450, 260, 60, COLORS.panel)
+            .setStrokeStyle(3, color)
             .setInteractive({ useHandCursor: true });
 
-        this.add.text(GAME_WIDTH/2, 510, "PLAY AGAIN", {
-            fontFamily: "Arial", fontSize: "24px", color: "#08111f", fontStyle: "bold"
+        this.add.text(GAME_WIDTH/2, 450, "REBOOT SYSTEM", {
+            fontFamily: "Courier New", fontSize: "24px", color: color, fontStyle: "bold"
         }).setOrigin(0.5);
 
-        btn.on("pointerdown", () => this.scene.start("BossBattleScene"));
+        btn.on("pointerdown", () => this.scene.start('Start'));
+
     }
 }
-
-const config = {
-    type: Phaser.AUTO,
-    width: GAME_WIDTH,
-    height: GAME_HEIGHT,
-    backgroundColor: "#08111f",
-    scale: {
-        mode: Phaser.Scale.FIT,
-        autoCenter: Phaser.Scale.CENTER_BOTH
-    },
-    scene: [StartScene, BossBattleScene, ResultScene]
-};
-
-new Phaser.Game(config);

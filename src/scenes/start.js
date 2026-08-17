@@ -1,7 +1,7 @@
 import { Player } from '../../entity/player.js'
 import { Enemy } from '../../entity/enemy.js'
 import { ChemInfo } from '../chemistry/chemistry.js'
-export class Menu extends Phaser.Scene {
+export class Level extends Phaser.Scene {
     constructor() {
         super('Start');
         //^^ initializer for parent class to initialize the scene
@@ -16,6 +16,11 @@ export class Menu extends Phaser.Scene {
         this.load.image('atk','assets/attack.png');
     }
     create() {
+        this.scale.setGameSize(640, 360);
+        this.scale.scaleMode = Phaser.Scale.FIT;
+        this.scale.autoCenter = Phaser.Scale.CENTER_BOTH;
+        this.scale.updateScale();
+
         const enemy1 = new Enemy(this,300,275,'idle','k');
         enemy1.setFlipX(true);
         enemy1.setDepth(100);

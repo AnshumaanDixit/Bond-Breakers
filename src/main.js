@@ -1,4 +1,7 @@
-import { Menu } from './scenes/start.js';
+import { Level } from './scenes/start.js';
+import { StartScene } from './scenes/BossFight.js';
+import { BossBattleScene } from './scenes/BossFight.js';
+import { ResultScene } from './scenes/BossFight.js';
 const screenRatio = window.innerWidth/window.innerHeight;
 const dynamicWidth = 360*screenRatio;
 //^^ calculate the width based on the divice the users playing on so the image fits
@@ -16,7 +19,10 @@ const config = {
         activePointer:3,
     },
     scene: [
-        Menu
+        Level,
+        StartScene,
+        BossBattleScene,
+        ResultScene
     ],
     physics: {
         default: 'arcade',
@@ -24,7 +30,7 @@ const config = {
     },
     scale: {
         mode: Phaser.Scale.FIT,
-        autoCenter: Phaser.Scale.CENTER_BOTH
+        autoCenter: Phaser.Scale.CENTER_BOTH,
     },
 }
 

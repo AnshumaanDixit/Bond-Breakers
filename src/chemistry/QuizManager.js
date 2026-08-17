@@ -1,4 +1,4 @@
-class QuizManager {
+export class QuizManager {
     constructor() {
         this.quizQuestionBank = [
             {
